@@ -93,7 +93,8 @@
                 const questionsArray = JSON.parse(jsonText);
                 const testData = { timer: parseInt(duration), questions: questionsArray };
                 
-                db.ref('Quizzes/' + subject + '/' + testName).set(testData)
+                // 🟢 FIX: यहाँ 'Quizzes' की जगह 'Quizzes_Class10' कर दिया गया है 🟢
+                db.ref('Quizzes_Class10/' + subject + '/' + testName).set(testData)
                 .then(() => {
                     document.getElementById("testName").value = "";
                     document.getElementById("testDuration").value = "";
