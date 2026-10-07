@@ -173,28 +173,21 @@
             }
         });
 
-        // 🟢 FIX: सिर्फ Class 10 के विषय लोड होंगे 🟢
+        // 🟢 FIX: अब डेटा 'Quizzes_Class10' से आएगा 🟢
         window.onload = function() {
-            db.ref('Quizzes').on('value', (snapshot) => {
+            db.ref('Quizzes_Class10').on('value', (snapshot) => {
                 const subSelect = document.getElementById("studentSubject");
                 subSelect.innerHTML = '<option value="">-- विषय चुनें --</option>';
-                let hasClass10Subject = false;
                 
                 if (snapshot.exists()) {
                     snapshot.forEach(child => {
-                        // यहाँ फ़िल्टर लगा दिया गया है - सिर्फ "Class10" वाले फोल्डर ही दिखेंगे
-                        if (child.key.includes("Class10") || child.key.includes("class10")) {
-                            hasClass10Subject = true;
-                            const option = document.createElement("option");
-                            option.value = child.key;
-                            option.innerText = child.key.replace(/_/g, " "); 
-                            subSelect.appendChild(option);
-                        }
+                        const option = document.createElement("option");
+                        option.value = child.key;
+                        option.innerText = child.key.replace(/_/g, " "); 
+                        subSelect.appendChild(option);
                     });
-                }
-                
-                if (!hasClass10Subject) {
-                    subSelect.innerHTML = '<option value="">Class 10 का कोई विषय उपलब्ध नहीं है</option>';
+                } else {
+                    subSelect.innerHTML = '<option value="">कोई विषय उपलब्ध नहीं है</option>';
                 }
             });
         };
@@ -209,7 +202,8 @@
             }
             testDropdown.innerHTML = '<option value="">लोड हो रहा है...</option>';
 
-            db.ref('Quizzes/' + selectedSubject).once('value', (snapshot) => {
+            // 🟢 FIX: यहाँ भी 'Quizzes_Class10' किया गया है 🟢
+            db.ref('Quizzes_Class10/' + selectedSubject).once('value', (snapshot) => {
                 testDropdown.innerHTML = '<option value="">-- टेस्ट चुनें --</option>';
                 if (snapshot.exists()) {
                     snapshot.forEach(child => {
@@ -240,7 +234,8 @@
             document.getElementById("loading-screen").style.display = "block";
             document.getElementById("loading-text").innerText = "डेटा चेक किया जा रहा है...";
 
-            db.ref('Leaderboard/' + selectedSubject + '/' + selectedTestName + '/' + finalPlayerNameKey).once('value', (snap) => {
+            // 🟢 FIX: 'Leaderboard_Class10' से रैंक चेक होगा 🟢
+            db.ref('Leaderboard_Class10/' + selectedSubject + '/' + selectedTestName + '/' + finalPlayerNameKey).once('value', (snap) => {
                 if (snap.exists()) {
                     const data = snap.val();
                     const elapsed = Date.now() - data.timestamp;
@@ -264,7 +259,7 @@
         }
 
         function loadQuestionsSilently(studentData) {
-            db.ref('Quizzes/' + selectedSubject + '/' + selectedTestName).once('value', (snapshot) => {
+            db.ref('Quizzes_Class10/' + selectedSubject + '/' + selectedTestName).once('value', (snapshot) => {
                 if (snapshot.exists()) {
                     const data = snapshot.val();
                     questions = Array.isArray(data) ? data : data.questions;
@@ -283,7 +278,7 @@
             document.getElementById("watermark").innerText = (playerName + " 📱 ").repeat(300);
             document.getElementById("loading-text").innerText = "टेस्ट लोड हो रहा है...";
 
-            db.ref('Quizzes/' + selectedSubject + '/' + selectedTestName).once('value', (snapshot) => {
+            db.ref('Quizzes_Class10/' + selectedSubject + '/' + selectedTestName).once('value', (snapshot) => {
                 if (snapshot.exists()) {
                     const data = snapshot.val();
                     if(Array.isArray(data)) {
@@ -395,7 +390,8 @@
             testTimestamp = Date.now();
             let finalName = isCheat ? playerName + " (⚠️ Cheated)" : playerName;
 
-            db.ref('Leaderboard/' + selectedSubject + '/' + selectedTestName + '/' + finalPlayerNameKey).set({
+            // 🟢 FIX: रिजल्ट 'Leaderboard_Class10' में सेव होगा 🟢
+            db.ref('Leaderboard_Class10/' + selectedSubject + '/' + selectedTestName + '/' + finalPlayerNameKey).set({
                 name: finalName,
                 score: globalScore,
                 timestamp: testTimestamp,
@@ -419,7 +415,8 @@
                 document.getElementById("review-btn").style.display = "none";
             }
 
-            const leaderboardRef = db.ref('Leaderboard/' + selectedSubject + '/' + selectedTestName);
+            // 🟢 FIX: यहाँ भी 'Leaderboard_Class10' किया गया है 🟢
+            const leaderboardRef = db.ref('Leaderboard_Class10/' + selectedSubject + '/' + selectedTestName);
             leaderboardRef.off(); 
             
             leaderboardRef.on('value', (snapshot) => {
