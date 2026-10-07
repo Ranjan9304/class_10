@@ -162,12 +162,10 @@
         const FIVE_HOURS = 5 * 60 * 60 * 1000;
         const ONE_HOUR = 1 * 60 * 60 * 1000;
 
-        // Anti-Copy shortcuts
         document.addEventListener('keydown', function(e) {
             if (e.ctrlKey || e.metaKey) { e.preventDefault(); }
         });
 
-        // Anti-Cheat (Tab switch)
         document.addEventListener("visibilitychange", function() {
             if (document.visibilityState === 'hidden' && isTakingTest) {
                 alert("⚠️ चीटिंग अलर्ट! आपने टेस्ट के दौरान स्क्रीन बदली। टेस्ट सबमिट किया जा रहा है।");
@@ -175,19 +173,28 @@
             }
         });
 
+        // 🟢 FIX: सिर्फ Class 10 के विषय लोड होंगे 🟢
         window.onload = function() {
             db.ref('Quizzes').on('value', (snapshot) => {
                 const subSelect = document.getElementById("studentSubject");
                 subSelect.innerHTML = '<option value="">-- विषय चुनें --</option>';
+                let hasClass10Subject = false;
+                
                 if (snapshot.exists()) {
                     snapshot.forEach(child => {
-                        const option = document.createElement("option");
-                        option.value = child.key;
-                        option.innerText = child.key.replace(/_/g, " "); 
-                        subSelect.appendChild(option);
+                        // यहाँ फ़िल्टर लगा दिया गया है - सिर्फ "Class10" वाले फोल्डर ही दिखेंगे
+                        if (child.key.includes("Class10") || child.key.includes("class10")) {
+                            hasClass10Subject = true;
+                            const option = document.createElement("option");
+                            option.value = child.key;
+                            option.innerText = child.key.replace(/_/g, " "); 
+                            subSelect.appendChild(option);
+                        }
                     });
-                } else {
-                    subSelect.innerHTML = '<option value="">कोई विषय उपलब्ध नहीं है</option>';
+                }
+                
+                if (!hasClass10Subject) {
+                    subSelect.innerHTML = '<option value="">Class 10 का कोई विषय उपलब्ध नहीं है</option>';
                 }
             });
         };
@@ -286,11 +293,6 @@
                         questions = data.questions;
                         timeRemaining = data.timer * 60; 
                     }
-
-                    /* 
-                       NOTE: Shuffle (Random) Option Code removed from here. 
-                       Options will display in the exact order they appear in the JSON.
-                    */
 
                     userAnswers = {}; 
                     currentQIndex = 0;
@@ -393,7 +395,6 @@
             testTimestamp = Date.now();
             let finalName = isCheat ? playerName + " (⚠️ Cheated)" : playerName;
 
-            // Database me Data Replace/Save karna
             db.ref('Leaderboard/' + selectedSubject + '/' + selectedTestName + '/' + finalPlayerNameKey).set({
                 name: finalName,
                 score: globalScore,
@@ -411,7 +412,6 @@
             
             document.getElementById("final-score").innerText = globalScore + " / " + questions.length;
 
-            // 1 Hour Review Window
             const timePassed = Date.now() - testTimestamp;
             if (timePassed < ONE_HOUR) {
                 document.getElementById("review-btn").style.display = "block";
@@ -429,7 +429,6 @@
                 
                 snapshot.forEach((child) => results.push(child.val()));
                 
-                // Score Descending, Timestamp Ascending
                 results.sort((a, b) => {
                     if (b.score === a.score) return a.timestamp - b.timestamp;
                     return b.score - a.score;
@@ -445,7 +444,6 @@
                     else if(rankNum === 2) rankIcon = "🥈 2nd";
                     else if(rankNum === 3) rankIcon = "🥉 3rd";
 
-                    // Current User Match
                     if (data.name === playerName || data.name === playerName + " (⚠️ Cheated)") {
                         li.style.backgroundColor = "#d5f5e3";
                         li.style.borderLeft = "5px solid #27ae60";
