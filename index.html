@@ -1,0 +1,505 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Class 10 Pro Test Platform</title>
+    <style>
+        body { 
+            font-family: 'Arial', sans-serif; background-color: #f4f7f6; text-align: center; margin: 0; padding: 20px; 
+            user-select: none; -webkit-user-select: none; -moz-user-select: none; -ms-user-select: none;
+        }
+        
+        #watermark { 
+            position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; z-index: 9999; 
+            pointer-events: none; opacity: 0.04; font-size: 24px; transform: rotate(-30deg); 
+            overflow: hidden; white-space: pre-wrap; color: #000; font-weight: bold; display: none;
+        }
+
+        .container { max-width: 600px; background: white; margin: auto; padding: 20px; border-radius: 10px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); position: relative; z-index: 10; }
+        h1 { color: #2c3e50; font-size: 24px;}
+        input, select { width: 90%; padding: 10px; margin: 10px 0; border: 1px solid #ccc; border-radius: 5px; font-size: 16px; }
+        button { background: #27ae60; color: white; border: none; padding: 12px 15px; font-size: 16px; cursor: pointer; border-radius: 5px; margin: 5px; font-weight:bold;}
+        button:hover { background: #219150; }
+        button:disabled { background: #95a5a6; cursor: not-allowed; }
+        
+        .option-btn { display: block; width: 100%; background: #ecf0f1; color: #333; margin-bottom: 10px; text-align: left; padding: 15px; border: 2px solid #bdc3c7; border-radius:5px;}
+        .option-btn.selected { background: #3498db; color: white; border-color: #2980b9;}
+        
+        .nav-buttons { display: flex; justify-content: space-between; margin-top: 20px;}
+        #quiz-screen, #leaderboard-screen, #loading-screen, #review-screen { display: none; }
+        
+        .rank-list { text-align: left; padding: 10px; list-style: none; margin: 0; max-height: 400px; overflow-y: auto; background: #fdfefe; border: 1px solid #ccc; border-bottom-left-radius: 8px; border-bottom-right-radius: 8px;}
+        .rank-list li { background: #ecf0f1; margin: 5px 0; padding: 12px; border-radius: 5px; font-weight: bold; display: flex; justify-content: space-between; align-items: center; border-left: 5px solid #bdc3c7; font-size: 15px;}
+        .list-header { background: #2c3e50; color: white; padding: 12px; margin-top: 15px; border-top-left-radius: 8px; border-top-right-radius: 8px; font-size: 16px; font-weight: bold; display: flex; justify-content: space-between;}
+        
+        .timer-box { font-size: 18px; font-weight: bold; color: #e74c3c; margin-bottom: 15px; border: 2px solid #e74c3c; padding: 5px 15px; border-radius: 5px; display: inline-block; background: #fdedec;}
+        
+        .review-box { padding: 15px; margin-bottom: 15px; border-radius: 5px; text-align: left; border: 1px solid #ccc;}
+        .review-correct { background-color: #e8f8f5; border-left: 5px solid #2ecc71;}
+        .review-wrong { background-color: #fdedec; border-left: 5px solid #e74c3c;}
+        .review-skipped { background-color: #f2f2f2; border-left: 5px solid #95a5a6;}
+
+        .msg-box { font-size: 14px; font-weight: bold; padding: 10px; border-radius: 5px; margin-bottom: 15px; }
+        .msg-warning { background: #fcf3cf; color: #b7950b; border: 1px solid #f1c40f; }
+        .msg-danger { background: #fdedec; color: #c0392b; border: 1px solid #e74c3c; }
+        
+        .my-score-card { background:#e8f8f5; padding:15px; border-radius:8px; border: 2px solid #27ae60; margin-bottom: 15px; display: flex; justify-content: space-around; align-items: center;}
+        .my-score-card div { text-align: center; }
+        .my-score-card h3 { margin: 0; color: #2c3e50; font-size: 16px;}
+        .my-score-card h2 { margin: 5px 0 0 0; color: #27ae60; font-size: 26px;}
+    </style>
+    
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+</head>
+<body oncontextmenu="return false;" oncopy="return false;" oncut="return false;" onpaste="return false;">
+
+    <div id="watermark"></div>
+
+    <!-- Login Screen -->
+    <div class="container" id="login-screen">
+        <h1>Class 10 - ऑनलाइन टेस्ट</h1>
+        <div class="msg-box msg-danger">
+            ⚠️ चेतावनी: टेस्ट के दौरान स्क्रीन बदलने या ऐप से बाहर जाने पर टेस्ट अपने-आप सबमिट हो जाएगा।
+        </div>
+        <input type="text" id="studentName" placeholder="अपना पूरा नाम लिखें (उदा. Rahul Kumar)">
+        
+        <select id="studentSubject" onchange="loadAvailableTests()">
+            <option value="">-- विषय लोड हो रहे हैं... --</option>
+        </select>
+
+        <select id="testNameSelect">
+            <option value="">-- पहले विषय चुनें --</option>
+        </select>
+
+        <button onclick="checkStudentStatus()" style="width:100%; padding:15px; font-size: 18px;">टेस्ट शुरू करें</button>
+    </div>
+
+    <!-- Loading Screen -->
+    <div class="container" id="loading-screen">
+        <h2 id="loading-text">कृपया प्रतीक्षा करें...</h2>
+    </div>
+
+    <!-- Quiz Screen -->
+    <div class="container" id="quiz-screen">
+        <div class="timer-box" id="timer-display">समय: 00:00</div>
+        <h3 id="test-title" style="color:#e67e22; margin-top:0; border-bottom: 2px dashed #ccc; padding-bottom:10px;"></h3>
+        <h2 id="question-text" style="font-size: 19px; text-align:left; color:#333;">प्रश्न यहाँ आएगा</h2>
+        
+        <div id="options-container"></div>
+        
+        <div class="nav-buttons">
+            <button id="prev-btn" onclick="prevQuestion()" style="background:#7f8c8d;">◀ पिछला</button>
+            <span style="font-weight:bold; color: #555; align-self: center; font-size: 18px;"><span id="q-number">1</span> / <span id="total-q"></span></span>
+            <button id="next-btn" onclick="nextQuestion()" style="background:#2980b9;">अगला ▶</button>
+        </div>
+        <button onclick="confirmSubmit()" style="width:100%; background:#e74c3c; margin-top:25px; padding: 12px;">✅ टेस्ट सबमिट करें</button>
+    </div>
+
+    <!-- Leaderboard Screen -->
+    <div class="container" id="leaderboard-screen">
+        <h1>🏆 लाइव लीडरबोर्ड 🏆</h1>
+        <div id="retake-msg" class="msg-box msg-warning" style="display: none;"></div>
+        
+        <div class="my-score-card">
+            <div>
+                <h3>आपका स्कोर</h3>
+                <h2 id="final-score">0/0</h2>
+            </div>
+            <div>
+                <h3>आपकी रैंक</h3>
+                <h2 id="my-rank">#0</h2>
+            </div>
+        </div>
+        
+        <button id="review-btn" onclick="showReview()" style="width:100%; background:#3498db; margin-bottom: 15px; display: none;">🔍 देखें कौन सा सवाल सही/गलत हुआ</button>
+        
+        <div class="list-header">
+            <span>रैंक & नाम</span>
+            <span>अंक (Marks)</span>
+        </div>
+        <ul class="rank-list" id="rankings"></ul>
+        
+        <button onclick="location.reload()" style="margin-top:20px; background:#e67e22; width:100%;">होम पेज पर वापस जाएं</button>
+    </div>
+
+    <!-- Review Screen -->
+    <div class="container" id="review-screen">
+        <h1>टेस्ट रिपोर्ट (सही/गलत) 📊</h1>
+        <div id="review-container" style="max-height: 400px; overflow-y: auto; padding-right:10px; margin-bottom:15px;"></div>
+        <button onclick="backToLeaderboard()" style="width:100%; background:#e67e22;">⬅ लीडरबोर्ड पर वापस जाएं</button>
+    </div>
+
+    <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyCBwUnvVsCI5Fl05e8pwUeZwcGN0S1FFN4",
+            authDomain: "bsebquiz-8d9cd.firebaseapp.com",
+            databaseURL: "https://bsebquiz-8d9cd-default-rtdb.firebaseio.com",
+            projectId: "bsebquiz-8d9cd",
+            storageBucket: "bsebquiz-8d9cd.firebasestorage.app",
+            messagingSenderId: "954222791141",
+            appId: "1:954222791141:web:575488a4eb4f6ca31f870c"
+        };
+        
+        if (!firebase.apps.length) { firebase.initializeApp(firebaseConfig); }
+        const db = firebase.database();
+
+        let questions = [];
+        let currentQIndex = 0;
+        let playerName = "";
+        let finalPlayerNameKey = "";
+        let selectedSubject = "";
+        let selectedTestName = "";
+        
+        let userAnswers = {}; 
+        let isTakingTest = false;
+        let timerInterval;
+        let timeRemaining = 0;
+        let globalScore = 0;
+        let testTimestamp = 0;
+
+        const FIVE_HOURS = 5 * 60 * 60 * 1000;
+        const ONE_HOUR = 1 * 60 * 60 * 1000;
+
+        // Anti-Copy shortcuts
+        document.addEventListener('keydown', function(e) {
+            if (e.ctrlKey || e.metaKey) { e.preventDefault(); }
+        });
+
+        // Anti-Cheat (Tab switch)
+        document.addEventListener("visibilitychange", function() {
+            if (document.visibilityState === 'hidden' && isTakingTest) {
+                alert("⚠️ चीटिंग अलर्ट! आपने टेस्ट के दौरान स्क्रीन बदली। टेस्ट सबमिट किया जा रहा है।");
+                submitQuiz(true); 
+            }
+        });
+
+        window.onload = function() {
+            db.ref('Quizzes').on('value', (snapshot) => {
+                const subSelect = document.getElementById("studentSubject");
+                subSelect.innerHTML = '<option value="">-- विषय चुनें --</option>';
+                if (snapshot.exists()) {
+                    snapshot.forEach(child => {
+                        const option = document.createElement("option");
+                        option.value = child.key;
+                        option.innerText = child.key.replace(/_/g, " "); 
+                        subSelect.appendChild(option);
+                    });
+                } else {
+                    subSelect.innerHTML = '<option value="">कोई विषय उपलब्ध नहीं है</option>';
+                }
+            });
+        };
+
+        function loadAvailableTests() {
+            selectedSubject = document.getElementById("studentSubject").value;
+            const testDropdown = document.getElementById("testNameSelect");
+            
+            if(selectedSubject === "") {
+                testDropdown.innerHTML = '<option value="">-- पहले विषय चुनें --</option>';
+                return;
+            }
+            testDropdown.innerHTML = '<option value="">लोड हो रहा है...</option>';
+
+            db.ref('Quizzes/' + selectedSubject).once('value', (snapshot) => {
+                testDropdown.innerHTML = '<option value="">-- टेस्ट चुनें --</option>';
+                if (snapshot.exists()) {
+                    snapshot.forEach(child => {
+                        const option = document.createElement("option");
+                        option.value = child.key;
+                        option.innerText = child.key;
+                        testDropdown.appendChild(option);
+                    });
+                } else {
+                    testDropdown.innerHTML = '<option value="">इस विषय में कोई टेस्ट नहीं है</option>';
+                }
+            });
+        }
+
+        function checkStudentStatus() {
+            playerName = document.getElementById("studentName").value.trim();
+            selectedSubject = document.getElementById("studentSubject").value;
+            selectedTestName = document.getElementById("testNameSelect").value;
+
+            if (playerName === "" || selectedSubject === "" || selectedTestName === "") {
+                alert("कृपया अपना नाम, विषय और टेस्ट चुनें!");
+                return;
+            }
+
+            finalPlayerNameKey = playerName.replace(/[.#$\[\]\/]/g, "_");
+
+            document.getElementById("login-screen").style.display = "none";
+            document.getElementById("loading-screen").style.display = "block";
+            document.getElementById("loading-text").innerText = "डेटा चेक किया जा रहा है...";
+
+            db.ref('Leaderboard/' + selectedSubject + '/' + selectedTestName + '/' + finalPlayerNameKey).once('value', (snap) => {
+                if (snap.exists()) {
+                    const data = snap.val();
+                    const elapsed = Date.now() - data.timestamp;
+
+                    if (elapsed < FIVE_HOURS) {
+                        let hoursLeft = Math.ceil((FIVE_HOURS - elapsed) / (1000 * 60 * 60));
+                        document.getElementById("retake-msg").innerText = `आप यह टेस्ट ${hoursLeft} घंटे बाद दोबारा दे सकते हैं।`;
+                        document.getElementById("retake-msg").style.display = "block";
+                        
+                        loadQuestionsSilently(data); 
+                    } else {
+                        startFreshTest();
+                    }
+                } else {
+                    startFreshTest();
+                }
+            }).catch(e => {
+                alert("नेटवर्क एरर। पेज रिफ्रेश करें।");
+                location.reload();
+            });
+        }
+
+        function loadQuestionsSilently(studentData) {
+            db.ref('Quizzes/' + selectedSubject + '/' + selectedTestName).once('value', (snapshot) => {
+                if (snapshot.exists()) {
+                    const data = snapshot.val();
+                    questions = Array.isArray(data) ? data : data.questions;
+                    
+                    globalScore = studentData.score;
+                    userAnswers = studentData.answers || {}; 
+                    testTimestamp = studentData.timestamp;
+
+                    showLeaderboardDirectly();
+                }
+            });
+        }
+
+        function startFreshTest() {
+            document.getElementById("watermark").style.display = "block";
+            document.getElementById("watermark").innerText = (playerName + " 📱 ").repeat(300);
+            document.getElementById("loading-text").innerText = "टेस्ट लोड हो रहा है...";
+
+            db.ref('Quizzes/' + selectedSubject + '/' + selectedTestName).once('value', (snapshot) => {
+                if (snapshot.exists()) {
+                    const data = snapshot.val();
+                    if(Array.isArray(data)) {
+                        questions = data;
+                        timeRemaining = questions.length * 60; 
+                    } else {
+                        questions = data.questions;
+                        timeRemaining = data.timer * 60; 
+                    }
+
+                    /* 
+                       NOTE: Shuffle (Random) Option Code removed from here. 
+                       Options will display in the exact order they appear in the JSON.
+                    */
+
+                    userAnswers = {}; 
+                    currentQIndex = 0;
+                    
+                    document.getElementById("loading-screen").style.display = "none";
+                    document.getElementById("quiz-screen").style.display = "block";
+                    document.getElementById("test-title").innerText = selectedTestName;
+                    document.getElementById("total-q").innerText = questions.length;
+                    
+                    isTakingTest = true;
+                    startTimer();
+                    loadQuestion();
+                } else {
+                    alert("टेस्ट लोड नहीं हो सका!");
+                    location.reload();
+                }
+            });
+        }
+
+        function startTimer() {
+            timerInterval = setInterval(() => {
+                timeRemaining--;
+                let m = Math.floor(timeRemaining / 60);
+                let s = timeRemaining % 60;
+                document.getElementById("timer-display").innerText = `समय: ${m}:${s < 10 ? '0'+s : s}`;
+                
+                if(timeRemaining <= 0) {
+                    clearInterval(timerInterval);
+                    alert("समय समाप्त! आपका टेस्ट ऑटो-सबमिट हो रहा है।");
+                    submitQuiz(false);
+                }
+            }, 1000);
+        }
+
+        function loadQuestion() {
+            const q = questions[currentQIndex];
+            document.getElementById("question-text").innerText = q.question;
+            document.getElementById("q-number").innerText = currentQIndex + 1;
+            
+            document.getElementById("prev-btn").disabled = (currentQIndex === 0);
+            document.getElementById("next-btn").disabled = (currentQIndex === questions.length - 1);
+
+            const optionsContainer = document.getElementById("options-container");
+            optionsContainer.innerHTML = "";
+            
+            q.options.forEach(opt => {
+                if(opt && String(opt).trim() !== "") {
+                    const btn = document.createElement("button");
+                    btn.className = "option-btn";
+                    if(userAnswers[currentQIndex] === String(opt)) {
+                        btn.classList.add("selected");
+                    }
+                    btn.innerText = opt;
+                    btn.onclick = () => selectOption(String(opt));
+                    optionsContainer.appendChild(btn);
+                }
+            });
+        }
+
+        function selectOption(selectedOpt) {
+            userAnswers[currentQIndex] = selectedOpt;
+            loadQuestion(); 
+        }
+
+        function nextQuestion() {
+            if(currentQIndex < questions.length - 1) {
+                currentQIndex++;
+                loadQuestion();
+            }
+        }
+
+        function prevQuestion() {
+            if(currentQIndex > 0) {
+                currentQIndex--;
+                loadQuestion();
+            }
+        }
+
+        function confirmSubmit() {
+            if(confirm("क्या आप वाकई टेस्ट सबमिट करना चाहते हैं?")) {
+                submitQuiz(false);
+            }
+        }
+
+        function submitQuiz(isCheat = false) {
+            if(!isTakingTest) return; 
+            isTakingTest = false;
+            clearInterval(timerInterval);
+            document.getElementById("watermark").style.display = "none"; 
+
+            let calculatedScore = 0;
+            questions.forEach((q, index) => {
+                let studentAns = userAnswers[index];
+                if(studentAns && q.answer && String(studentAns).trim() === String(q.answer).trim()) {
+                    calculatedScore++;
+                }
+            });
+            
+            globalScore = calculatedScore;
+            testTimestamp = Date.now();
+            let finalName = isCheat ? playerName + " (⚠️ Cheated)" : playerName;
+
+            // Database me Data Replace/Save karna
+            db.ref('Leaderboard/' + selectedSubject + '/' + selectedTestName + '/' + finalPlayerNameKey).set({
+                name: finalName,
+                score: globalScore,
+                timestamp: testTimestamp,
+                answers: userAnswers
+            }).then(() => {
+                showLeaderboardDirectly();
+            });
+        }
+
+        function showLeaderboardDirectly() {
+            document.getElementById("loading-screen").style.display = "none";
+            document.getElementById("quiz-screen").style.display = "none";
+            document.getElementById("leaderboard-screen").style.display = "block";
+            
+            document.getElementById("final-score").innerText = globalScore + " / " + questions.length;
+
+            // 1 Hour Review Window
+            const timePassed = Date.now() - testTimestamp;
+            if (timePassed < ONE_HOUR) {
+                document.getElementById("review-btn").style.display = "block";
+            } else {
+                document.getElementById("review-btn").style.display = "none";
+            }
+
+            const leaderboardRef = db.ref('Leaderboard/' + selectedSubject + '/' + selectedTestName);
+            leaderboardRef.off(); 
+            
+            leaderboardRef.on('value', (snapshot) => {
+                const rankingsList = document.getElementById("rankings");
+                rankingsList.innerHTML = "";
+                let results = [];
+                
+                snapshot.forEach((child) => results.push(child.val()));
+                
+                // Score Descending, Timestamp Ascending
+                results.sort((a, b) => {
+                    if (b.score === a.score) return a.timestamp - b.timestamp;
+                    return b.score - a.score;
+                });
+
+                let myRank = "N/A";
+
+                results.forEach((data, index) => {
+                    const li = document.createElement("li");
+                    let rankNum = index + 1;
+                    let rankIcon = `#${rankNum}`;
+                    if(rankNum === 1) rankIcon = "🥇 1st";
+                    else if(rankNum === 2) rankIcon = "🥈 2nd";
+                    else if(rankNum === 3) rankIcon = "🥉 3rd";
+
+                    // Current User Match
+                    if (data.name === playerName || data.name === playerName + " (⚠️ Cheated)") {
+                        li.style.backgroundColor = "#d5f5e3";
+                        li.style.borderLeft = "5px solid #27ae60";
+                        myRank = rankNum;
+                    }
+
+                    li.innerHTML = `<span><span style="color:#e74c3c; font-weight:bold;">${rankIcon}</span> &nbsp; ${data.name}</span> <span style="background:#27ae60; color:white; padding:4px 10px; border-radius:15px;">${data.score}</span>`;
+                    rankingsList.appendChild(li);
+                });
+
+                document.getElementById("my-rank").innerText = "#" + myRank;
+            });
+        }
+
+        function showReview() {
+            document.getElementById("leaderboard-screen").style.display = "none";
+            document.getElementById("review-screen").style.display = "block";
+            
+            const reviewContainer = document.getElementById("review-container");
+            reviewContainer.innerHTML = "";
+
+            questions.forEach((q, index) => {
+                const studentAns = userAnswers[index];
+                const isCorrect = studentAns && q.answer && String(studentAns).trim() === String(q.answer).trim();
+                const isSkipped = !studentAns;
+
+                let statusHTML = "";
+                let boxClass = "";
+
+                if (isSkipped) {
+                    statusHTML = `<span style="color:#7f8c8d; font-weight:bold;">❌ आपने यह सवाल छोड़ दिया</span>`;
+                    boxClass = "review-skipped";
+                } else if (isCorrect) {
+                    statusHTML = `<span style="color:#27ae60; font-weight:bold;">✅ आपका उत्तर सही है</span>`;
+                    boxClass = "review-correct";
+                } else {
+                    statusHTML = `<span style="color:#c0392b; font-weight:bold;">❌ गलत उत्तर (आपने चुना: ${studentAns})</span>`;
+                    boxClass = "review-wrong";
+                }
+
+                reviewContainer.innerHTML += `
+                    <div class="review-box ${boxClass}">
+                        <p style="margin-top:0; font-weight:bold; color:#333;">प्र. ${index + 1}: ${q.question}</p>
+                        <p style="margin:5px 0;">${statusHTML}</p>
+                        <p style="margin:0; color:#27ae60; font-weight:bold;">✔️ सही उत्तर: ${q.answer}</p>
+                    </div>
+                `;
+            });
+        }
+
+        function backToLeaderboard() {
+            document.getElementById("review-screen").style.display = "none";
+            document.getElementById("leaderboard-screen").style.display = "block";
+        }
+    </script>
+</body>
+</html>

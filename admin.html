@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Class 10 Admin Panel - Pro Bulk Upload</title>
+    <style>
+        body { font-family: Arial, sans-serif; background-color: #f4f7f6; padding: 20px; text-align: center; }
+        .container { max-width: 600px; background: white; margin: auto; padding: 20px; border-radius: 10px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); }
+        input, select, textarea { width: 90%; padding: 10px; margin: 10px 0; border: 1px solid #ccc; border-radius: 5px; font-size: 16px; }
+        textarea { font-family: monospace; }
+        button { background: #e74c3c; color: white; border: none; padding: 12px 20px; font-size: 16px; cursor: pointer; border-radius: 5px; width: 100%; margin-top: 10px; font-weight:bold;}
+        button:hover { background: #c0392b; }
+        .success { color: green; display: none; margin-top: 10px; font-weight: bold;}
+        .error { color: red; display: none; margin-top: 10px; font-weight: bold;}
+    </style>
+    
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+</head>
+<body>
+
+    <div class="container">
+        <h1>Class 10 Admin Panel 🛠️</h1>
+        <p>विषय, टेस्ट का नाम, समय (मिनट में) और JSON कोड डालें</p>
+        
+        <select id="subjectSelect" onchange="checkNewSubject()">
+            <!-- Class 10 Subjects Default List -->
+            <option value="Science_Class10">Science (Class 10)</option>
+            <option value="Math_Class10">Mathematics (Class 10)</option>
+            <option value="SST_Class10">Social Science / SST (Class 10)</option>
+            <option value="Hindi_Class10">Hindi (Class 10)</option>
+            <option value="English_Class10">English (Class 10)</option>
+            <option value="ADD_NEW" style="font-weight:bold; color:blue;">+ नया विषय जोड़ें...</option>
+        </select>
+
+        <input type="text" id="newSubjectInput" placeholder="नए विषय का नाम (जैसे: Sanskrit_Class10)" style="display:none; border-color:blue;">
+
+        <input type="text" id="testName" placeholder="टेस्ट का नाम (जैसे: Science Chapter 1 Mock Test)">
+        <input type="number" id="testDuration" placeholder="टेस्ट का समय (मिनटों में, जैसे: 30)">
+        
+        <textarea id="bulkData" rows="10" placeholder="यहाँ प्रश्नों का JSON कोड पेस्ट करें..."></textarea>
+        
+        <button onclick="saveBulkTest()">🚀 टेस्ट पब्लिश करें</button>
+        <p class="success" id="msgSuccess">टेस्ट सफलतापूर्वक अपलोड हो गया!</p>
+        <p class="error" id="msgError"></p>
+    </div>
+
+    <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyCBwUnvVsCI5Fl05e8pwUeZwcGN0S1FFN4",
+            authDomain: "bsebquiz-8d9cd.firebaseapp.com",
+            databaseURL: "https://bsebquiz-8d9cd-default-rtdb.firebaseio.com",
+            projectId: "bsebquiz-8d9cd",
+            storageBucket: "bsebquiz-8d9cd.firebasestorage.app",
+            messagingSenderId: "954222791141",
+            appId: "1:954222791141:web:575488a4eb4f6ca31f870c"
+        };
+        
+        if (!firebase.apps.length) { firebase.initializeApp(firebaseConfig); }
+        const db = firebase.database();
+
+        function checkNewSubject() {
+            const selectValue = document.getElementById("subjectSelect").value;
+            const newSubInput = document.getElementById("newSubjectInput");
+            newSubInput.style.display = (selectValue === "ADD_NEW") ? "block" : "none";
+        }
+
+        function saveBulkTest() {
+            let subject = document.getElementById("subjectSelect").value;
+            
+            if(subject === "ADD_NEW") {
+                subject = document.getElementById("newSubjectInput").value.trim().replace(/\s+/g, "_");
+                if(subject === "") { alert("कृपया नए विषय का नाम लिखें!"); return; }
+            }
+
+            const testName = document.getElementById("testName").value.trim();
+            const duration = document.getElementById("testDuration").value.trim();
+            const jsonText = document.getElementById("bulkData").value.trim();
+
+            const msgError = document.getElementById("msgError");
+            const msgSuccess = document.getElementById("msgSuccess");
+            msgError.style.display = "none";
+            msgSuccess.style.display = "none";
+
+            if(testName === "" || jsonText === "" || duration === "") {
+                msgError.innerText = "कृपया सभी बॉक्स भरें (नाम, समय और कोड)!";
+                msgError.style.display = "block";
+                return;
+            }
+
+            try {
+                const questionsArray = JSON.parse(jsonText);
+                const testData = { timer: parseInt(duration), questions: questionsArray };
+                
+                db.ref('Quizzes/' + subject + '/' + testName).set(testData)
+                .then(() => {
+                    document.getElementById("testName").value = "";
+                    document.getElementById("testDuration").value = "";
+                    document.getElementById("bulkData").value = "";
+                    document.getElementById("newSubjectInput").value = "";
+                    document.getElementById("subjectSelect").selectedIndex = 0;
+                    document.getElementById("newSubjectInput").style.display = "none";
+
+                    msgSuccess.style.display = "block";
+                    setTimeout(() => msgSuccess.style.display = "none", 4000);
+                }).catch((error) => {
+                    msgError.innerText = "डेटाबेस एरर: " + error.message;
+                    msgError.style.display = "block";
+                });
+            } catch (e) {
+                msgError.innerText = "एरर! कोड सही JSON फॉर्मेट में नहीं है।";
+                msgError.style.display = "block";
+            }
+        }
+    </script>
+</body>
+</html>
