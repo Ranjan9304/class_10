@@ -80,7 +80,7 @@
 <div class="container" id="resultScreen" style="display:none;">
     <h1>टेस्ट समाप्त!</h1>
     <h2 id="scoreDisplay"></h2>
-    <h3 id="rankDisplay">रैंक लोड हो रही है... कृपया प्रतीक्षा करें...</h3>
+    <h3 id="rankDisplay">रैंक कैलकुलेट की जा रही है... कृपया प्रतीक्षा करें...</h3>
     <p style="color:red; text-align:center;">आप अपने सही/गलत उत्तर सबमिट करने के 1 घंटे के भीतर ही देख सकते हैं।</p>
     <div id="reviewContainer"></div>
     <button onclick="location.reload()" style="margin-top: 20px;">होम पेज पर जाएँ</button>
@@ -123,7 +123,7 @@
     let studentName = null;
     let timerInterval;
 
-    // 4. LOAD QUIZZES BASED ON SUBJECT (CLASS 10)
+    // 4. LOAD QUIZZES BASED ON SUBJECT
     function loadQuizzes() {
         subject = document.getElementById('subjectSelect').value;
         const quizSelect = document.getElementById('quizSelect');
@@ -184,7 +184,6 @@
             qDiv.className = 'question-card';
             let html = `<h3>प्र. ${index + 1}: ${q.question}</h3>`;
             
-            // Render options strictly in original JSON order
             q.options.forEach((opt, i) => {
                 html += `<label class="option-label">
                             <input type="radio" name="q${index}" value="${opt}"> ${opt}
@@ -224,7 +223,7 @@
         }
     }
 
-    // 9. SUBMIT TEST & FETCH RANK
+    // 9. SUBMIT TEST
     function submitTest() {
         isTestActive = false;
         clearInterval(timerInterval);
@@ -244,7 +243,7 @@
 
         const timestamp = Date.now();
         
-        // Push Data to Firebase
+        // Push Data to Firebase Leaderboard_Class10
         const newRecordRef = db.ref(`Leaderboard_Class10/${subject}/${quizId}`).push();
         newRecordRef.set({
             name: studentName,
@@ -253,41 +252,57 @@
             timestamp: timestamp,
             answers: userAnswers
         }).then(() => {
-            // After saving, calculate and display Rank
             calculateAndDisplayRank(newRecordRef.key);
         });
 
         // Set Local Storage
         localStorage.setItem(`attempt_10_${subject}_${quizId}_${studentName}`, timestamp);
-        localStorage.setItem(`recordKey_10_${subject}_${quizId}_${studentName}`, newRecordRef.key); // Store key for review
+        localStorage.setItem(`recordKey_10_${subject}_${quizId}_${studentName}`, newRecordRef.key);
         localStorage.setItem(`review_10_${subject}_${quizId}_${studentName}`, JSON.stringify(userAnswers));
 
         // UI Changes
         document.getElementById('quizScreen').style.display = 'none';
         document.getElementById('resultScreen').style.display = 'block';
         document.getElementById('scoreDisplay').innerText = `आपका स्कोर: ${score} / ${currentQuizData.questions.length}`;
-        document.getElementById('rankDisplay').innerText = "रैंक कैलकुलेट की जा रही है...";
         
         renderReview(userAnswers);
     }
 
-    // 10. CALCULATE AND DISPLAY RANK
+    // 10. CALCULATE AND DISPLAY RANK (MARKS-BASED ROBUST SORTING)
     function calculateAndDisplayRank(recordKey) {
         db.ref(`Leaderboard_Class10/${subject}/${quizId}`).once('value', snapshot => {
             let results = [];
             snapshot.forEach(child => {
-                results.push({ key: child.key, ...child.val() });
+                let data = child.val();
+                results.push({ 
+                    key: child.key, 
+                    score: Number(data.score) || 0,
+                    timestamp: Number(data.timestamp) || 0 
+                });
             });
 
-            // Sort logic: Highest score first, if tie -> Earliest timestamp first
-            results.sort((a, b) => b.score - a.score || a.timestamp - b.timestamp);
+            // Sorting logic: Higher score first, if tie -> Earliest timestamp first
+            results.sort((a, b) => {
+                if (b.score !== a.score) {
+                    return b.score - a.score;
+                }
+                return a.timestamp - b.timestamp;
+            });
+
+            // Assign ranks handling ties (same score = same rank)
+            let currentRank = 1;
+            for (let i = 0; i < results.length; i++) {
+                if (i > 0 && results[i].score < results[i - 1].score) {
+                    currentRank = i + 1;
+                }
+                results[i].rank = currentRank;
+            }
 
             // Find current student's rank
-            let rankIndex = results.findIndex(r => r.key === recordKey);
+            let myRecord = results.find(r => r.key === recordKey);
             
-            if (rankIndex !== -1) {
-                let rank = rankIndex + 1;
-                document.getElementById('rankDisplay').innerText = `🏆 आपकी रैंक: #${rank} (कुल ${results.length} छात्रों में)`;
+            if (myRecord) {
+                document.getElementById('rankDisplay').innerText = `🏆 आपकी रैंक: #${myRecord.rank} (कुल ${results.length} छात्रों में)`;
             } else {
                 document.getElementById('rankDisplay').innerText = "रैंक प्राप्त करने में त्रुटि हुई।";
             }
@@ -345,9 +360,9 @@
             q.options.forEach(opt => {
                 let cssClass = '';
                 if(opt === q.answer) {
-                    cssClass = 'correct'; // Highlight correct answer green
+                    cssClass = 'correct'; 
                 } else if(userAnswers[index] === opt && opt !== q.answer) {
-                    cssClass = 'wrong'; // Highlight wrong selected answer red
+                    cssClass = 'wrong'; 
                 }
                 
                 let isChecked = (userAnswers[index] === opt) ? 'checked' : '';
