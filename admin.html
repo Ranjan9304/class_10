@@ -4,20 +4,20 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Class 10 - Admin Panel</title>
-    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-database-compat.js"></script>
+    <script src="[https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js](https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js)"></script>
+    <script src="[https://www.gstatic.com/firebasejs/9.22.1/firebase-database-compat.js](https://www.gstatic.com/firebasejs/9.22.1/firebase-database-compat.js)"></script>
     <style>
-        body { font-family: Arial, sans-serif; padding: 20px; background: #eef2f5; }
-        .container { max-width: 900px; margin: auto; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
+        body { font-family: Arial, sans-serif; padding: 15px; background: #eef2f5; margin: 0; }
+        .container { max-width: 900px; margin: auto; background: white; padding: 20px; border-radius: 10px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
         h1, h2 { color: #333; text-align: center; }
         .form-group { margin-bottom: 15px; }
         label { font-weight: bold; display: block; margin-bottom: 5px; }
-        select, input, textarea, button { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 5px; box-sizing: border-box; }
-        textarea { height: 150px; font-family: monospace; }
-        button { background: #007bff; color: white; border: none; cursor: pointer; margin-top: 10px; font-weight: bold; }
+        select, input, textarea, button { width: 100%; padding: 12px; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box; font-size: 15px; }
+        textarea { height: 180px; font-family: monospace; }
+        button { background: #007bff; color: white; border: none; cursor: pointer; margin-top: 10px; font-weight: bold; font-size: 16px; }
         button:hover { background: #0056b3; }
         table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-        th, td { border: 1px solid #ddd; padding: 10px; text-align: left; }
+        th, td { border: 1px solid #ddd; padding: 10px; text-align: center; }
         th { background-color: #007bff; color: white; }
     </style>
 </head>
@@ -40,7 +40,7 @@
     </div>
     
     <div class="form-group">
-        <label>टेस्ट का नाम (उदा: Science Ch 1 to 5 PYQs):</label>
+        <label>टेस्ट का नाम (उदा: Hindi Gadya Khand PYQs):</label>
         <input type="text" id="quizTitle" placeholder="Enter Test Name">
     </div>
 
@@ -58,17 +58,17 @@
 
     <hr style="margin: 40px 0;">
 
-    <h2>Class 10 लीडरबोर्ड देखें</h2>
+    <h2>Class 10 लीडरबोर्ड देखें (Marks के अनुसार)</h2>
     <div class="form-group">
         <label>विषय चुनें:</label>
         <select id="leaderboardSubject" onchange="loadAdminQuizzes()">
             <option value="">-- विषय चुनें --</option>
-            <option value="Science">Science</option>
-            <option value="SST">SST</option>
-            <option value="Math">Math</option>
-            <option value="Hindi">Hindi</option>
-            <option value="Sanskrit">Sanskrit</option>
-            <option value="English">English</option>
+            <option value="Science">Science (विज्ञान)</option>
+            <option value="SST">SST (सामाजिक विज्ञान)</option>
+            <option value="Math">Math (गणित)</option>
+            <option value="Hindi">Hindi (हिंदी)</option>
+            <option value="Sanskrit">Sanskrit (संस्कृत)</option>
+            <option value="English">English (अंग्रेजी)</option>
         </select>
     </div>
     <div class="form-group">
@@ -81,58 +81,89 @@
             <tr>
                 <th>रैंक (Rank)</th>
                 <th>छात्र का नाम (Name)</th>
-                <th>स्कोर (Score)</th>
+                <th>प्राप्तांक (Score)</th>
                 <th>समय (Date & Time)</th>
             </tr>
         </thead>
         <tbody id="leaderboardBody">
-            <tr><td colspan="4" style="text-align:center;">डेटा लोड हो रहा है...</td></tr>
+            <tr><td colspan="4" style="text-align:center;">विषय और टेस्ट चुनें...</td></tr>
         </tbody>
     </table>
 </div>
 
 <script>
-    // 1. FIREBASE CONFIGURATION (यहाँ अपनी Firebase Config डालें)
+    // 1. FIREBASE CONFIGURATION (Pre-configured for your project)
     const firebaseConfig = {
-        apiKey: "YOUR_API_KEY",
-        authDomain: "YOUR_AUTH_DOMAIN",
-        databaseURL: "YOUR_DATABASE_URL",
-        projectId: "YOUR_PROJECT_ID",
-        storageBucket: "YOUR_STORAGE_BUCKET",
-        messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
-        appId: "YOUR_APP_ID"
+        apiKey: "AIzaSyCNrj_kjgL968A9bnCxchVkstqraLlJXB8",
+        authDomain: "chemistry-quiz-549f8.firebaseapp.com",
+        databaseURL: "[https://chemistry-quiz-549f8-default-rtdb.firebaseio.com](https://chemistry-quiz-549f8-default-rtdb.firebaseio.com)",
+        projectId: "chemistry-quiz-549f8",
+        storageBucket: "chemistry-quiz-549f8.appspot.com",
+        messagingSenderId: "80126416681",
+        appId: "1:80126416681:web:03982f45ca35a97c758938"
     };
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
 
-    // 2. UPLOAD QUIZ TO Quizzes_Class10
+    // 2. UPLOAD QUIZ WITH BULLETPROOF AUTO-CLEANER
     function uploadQuiz() {
         const subject = document.getElementById('adminSubject').value;
         const title = document.getElementById('quizTitle').value.trim();
-        const timer = parseInt(document.getElementById('quizTimer').value);
-        const jsonStr = document.getElementById('jsonInput').value.trim();
+        const timer = parseInt(document.getElementById('quizTimer').value) || 30;
+        let jsonStr = document.getElementById('jsonInput').value;
 
-        if(!title || !jsonStr) {
-            alert("कृपया टेस्ट का नाम और JSON कोड भरें!"); return;
+        if(!title || !jsonStr.trim()) {
+            alert("कृपया टेस्ट का नाम और JSON कोड दोनों भरें!");
+            return;
         }
 
         try {
-            const questions = JSON.parse(jsonStr);
-            const quizId = title.replace(/\s+/g, '_').toLowerCase();
+            // Step 1: Fix iPhone/Mobile smart quotes and invisible characters
+            jsonStr = jsonStr
+                .replace(/[\u201C\u201D]/g, '"')
+                .replace(/[\u2018\u2019]/g, "'")
+                .replace(/[\u00A0\u200B\u200C\u200D\uFEFF]/g, ' ');
+
+            // Step 2: Automatically extract strictly from first '[' to last ']'
+            const firstBracket = jsonStr.indexOf('[');
+            const lastBracket = jsonStr.lastIndexOf(']');
+            if (firstBracket !== -1 && lastBracket !== -1 && lastBracket > firstBracket) {
+                jsonStr = jsonStr.substring(firstBracket, lastBracket + 1);
+            }
+
+            // Step 3: Remove any accidental trailing commas before ] or }
+            jsonStr = jsonStr.replace(/,\s*([\]}])/g, '$1');
+
+            const rawQuestions = JSON.parse(jsonStr);
+
+            if (!Array.isArray(rawQuestions) || rawQuestions.length === 0) {
+                alert("JSON में प्रश्न नहीं मिले!");
+                return;
+            }
+
+            // Step 4: Normalize question fields
+            const cleanQuestions = rawQuestions.map(q => ({
+                question: String(q.question || "").trim(),
+                options: Array.isArray(q.options) ? q.options.map(o => String(o).trim()) : [],
+                answer: String(q.answer || q.correctAnswer || "").trim()
+            }));
+
+            // Safe Firebase key
+            const quizId = title.replace(/[.#$\[\]\s\/]+/g, '_').toLowerCase();
 
             db.ref(`Quizzes_Class10/${subject}/${quizId}`).set({
                 title: title,
                 timer: timer,
-                questions: questions
+                questions: cleanQuestions
             }).then(() => {
-                alert("क्लास 10 का टेस्ट सफलतापूर्वक अपलोड हो गया!");
+                alert(`सफलतापूर्वक अपलोड हो गया!\nविषय: ${subject}\nटेस्ट: ${title}\nकुल प्रश्न: ${cleanQuestions.length}`);
                 document.getElementById('quizTitle').value = '';
                 document.getElementById('jsonInput').value = '';
             }).catch(err => {
-                alert("एरर: " + err.message);
+                alert("Firebase अपलोड एरर: " + err.message);
             });
         } catch(e) {
-            alert("Invalid JSON! कृपया JSON फॉर्मेट चेक करें।");
+            alert("JSON को पढ़ने में त्रुटि: कृपया चेक करें कि आपने पूरा JSON कोड कॉपी किया है।\nError: " + e.message);
         }
     }
 
@@ -140,7 +171,7 @@
     function loadAdminQuizzes() {
         const subject = document.getElementById('leaderboardSubject').value;
         const quizSelect = document.getElementById('leaderboardQuizSelect');
-        quizSelect.innerHTML = '<option value="">Loading...</option>';
+        quizSelect.innerHTML = '<option value="">लोड हो रहा है...</option>';
 
         if(subject) {
             db.ref(`Quizzes_Class10/${subject}`).once('value', snapshot => {
@@ -155,12 +186,12 @@
         }
     }
 
-    // 4. VIEW LEADERBOARD FROM Leaderboard_Class10 (MARKS-BASED ROBUST SORTING)
+    // 4. VIEW LEADERBOARD (STRICT MARKS SORTING)
     function viewLeaderboard() {
         const subject = document.getElementById('leaderboardSubject').value;
         const quizId = document.getElementById('leaderboardQuizSelect').value;
         const tbody = document.getElementById('leaderboardBody');
-        tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;">लोड हो रहा है...</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="4">लोड हो रहा है...</td></tr>';
 
         if(subject && quizId) {
             db.ref(`Leaderboard_Class10/${subject}/${quizId}`).once('value', snapshot => {
@@ -168,14 +199,14 @@
                 snapshot.forEach(child => {
                     let data = child.val();
                     results.push({
-                        name: data.name,
+                        name: data.name || "Unknown",
                         score: Number(data.score) || 0,
-                        total: Number(data.total) || 0,
+                        total: Number(data.total) || 50,
                         timestamp: Number(data.timestamp) || 0
                     });
                 });
 
-                // Sorting logic: Higher score first, if tie -> Earliest timestamp first
+                // Strictly sort by Marks (Highest first), then by time (Earliest first)
                 results.sort((a, b) => {
                     if (b.score !== a.score) {
                         return b.score - a.score;
@@ -185,22 +216,21 @@
 
                 tbody.innerHTML = '';
                 if(results.length === 0) {
-                    tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;">कोई डेटा नहीं मिला</td></tr>';
+                    tbody.innerHTML = '<tr><td colspan="4">कोई डेटा नहीं मिला</td></tr>';
                     return;
                 }
 
-                // Assign ranks handling ties (same score = same rank)
                 let currentRank = 1;
                 results.forEach((res, index) => {
                     if (index > 0 && res.score < results[index - 1].score) {
                         currentRank = index + 1;
                     }
                     
-                    let date = new Date(res.timestamp).toLocaleString('en-IN');
+                    let date = res.timestamp ? new Date(res.timestamp).toLocaleString('en-IN') : '-';
                     let row = `<tr>
                         <td style="font-weight:bold; color:#d9534f;">#${currentRank}</td>
                         <td>${res.name}</td>
-                        <td style="font-weight:bold; color:#5cb85c;">${res.score} / ${res.total}</td>
+                        <td style="font-weight:bold; color:#28a745;">${res.score} / ${res.total}</td>
                         <td>${date}</td>
                     </tr>`;
                     tbody.innerHTML += row;
