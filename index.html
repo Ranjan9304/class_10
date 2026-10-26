@@ -5,32 +5,41 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Class 10 - BSEB Online Test Portal</title>
     <!-- Firebase SDKs -->
-    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-database-compat.js"></script>
+    <script src="[https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js](https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js)"></script>
+    <script src="[https://www.gstatic.com/firebasejs/9.22.1/firebase-database-compat.js](https://www.gstatic.com/firebasejs/9.22.1/firebase-database-compat.js)"></script>
     
     <style>
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #f4f7f6; margin: 0; padding: 20px; user-select: none; }
-        .container { max-width: 800px; margin: auto; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); position: relative; z-index: 10; }
-        h1, h2 { text-align: center; color: #333; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #f4f7f6; margin: 0; padding: 15px; user-select: none; }
+        .container { max-width: 800px; margin: auto; background: white; padding: 20px; border-radius: 10px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); position: relative; z-index: 10; }
+        h1, h2, h3 { text-align: center; color: #333; margin-top: 5px; }
         .form-group { margin-bottom: 15px; }
-        select, input, button { width: 100%; padding: 12px; margin-top: 5px; border: 1px solid #ccc; border-radius: 5px; font-size: 16px; }
-        button { background: #007bff; color: white; border: none; cursor: pointer; font-weight: bold; }
+        label { font-weight: bold; display: block; margin-bottom: 5px; color: #444; }
+        select, input, button { width: 100%; padding: 12px; margin-top: 5px; border: 1px solid #ccc; border-radius: 6px; font-size: 16px; box-sizing: border-box; }
+        button { background: #007bff; color: white; border: none; cursor: pointer; font-weight: bold; transition: 0.2s; }
         button:hover { background: #0056b3; }
-        .question-card { background: #fafafa; padding: 15px; border-left: 4px solid #007bff; margin-bottom: 15px; border-radius: 4px; }
-        .option-label { display: block; background: #fff; padding: 10px; margin: 5px 0; border: 1px solid #ddd; border-radius: 4px; cursor: pointer; }
+        .btn-green { background: #28a745; margin-top: 10px; }
+        .btn-green:hover { background: #1e7e34; }
+        .btn-orange { background: #fd7e14; margin-top: 10px; }
+        .btn-orange:hover { background: #e36802; }
+        .question-card { background: #fafafa; padding: 15px; border-left: 4px solid #007bff; margin-bottom: 15px; border-radius: 6px; }
+        .option-label { display: block; background: #fff; padding: 10px; margin: 6px 0; border: 1px solid #ddd; border-radius: 4px; cursor: pointer; }
         .option-label:hover { background: #f0f8ff; }
-        .correct { background-color: #d4edda !important; border-color: #c3e6cb !important; }
-        .wrong { background-color: #f8d7da !important; border-color: #f5c6cb !important; }
-        #timer { font-size: 20px; font-weight: bold; color: #dc3545; text-align: right; margin-bottom: 15px; }
+        .correct { background-color: #d4edda !important; border-color: #28a745 !important; font-weight: bold; }
+        .wrong { background-color: #f8d7da !important; border-color: #dc3545 !important; }
+        #timer { font-size: 20px; font-weight: bold; color: #dc3545; text-align: right; margin-bottom: 15px; position: sticky; top: 0; background: #fff; padding: 10px; border-bottom: 2px solid #eee; z-index: 20; }
         
-        /* Rank Display Style */
-        #rankDisplay { color: #0056b3; text-align: center; background: #e9f2ff; padding: 10px; border-radius: 5px; border: 1px solid #b8daff; }
+        /* Rank & Leaderboard Styles */
+        #rankDisplay { color: #0056b3; text-align: center; background: #e9f2ff; padding: 12px; border-radius: 6px; border: 1px solid #b8daff; font-size: 20px; margin: 15px 0; }
+        table { width: 100%; border-collapse: collapse; margin: 15px 0; font-size: 15px; }
+        th, td { border: 1px solid #ddd; padding: 10px; text-align: center; }
+        th { background-color: #007bff; color: white; }
+        .my-row { background-color: #fff3cd !important; font-weight: bold; border: 2px solid #ffc107; }
 
         /* Dynamic Watermark */
         #watermark {
             position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
             pointer-events: none; z-index: 1; opacity: 0.04; 
-            font-size: 30px; font-weight: bold; color: #000;
+            font-size: 28px; font-weight: bold; color: #000;
             display: flex; flex-wrap: wrap; overflow: hidden; align-content: flex-start;
         }
         .wm-text { padding: 20px; transform: rotate(-30deg); white-space: nowrap; }
@@ -40,6 +49,7 @@
 
 <div id="watermark"></div>
 
+<!-- HOME / LOGIN SCREEN -->
 <div class="container" id="loginScreen">
     <h1>Class 10 - Online Test Portal</h1>
     
@@ -67,35 +77,67 @@
     </div>
 
     <button onclick="startTest()">टेस्ट शुरू करें (Start Test)</button>
-    <button onclick="checkReview()" style="background:#28a745; margin-top:10px;">पिछला रिजल्ट/रिव्यू देखें</button>
+    <button class="btn-green" onclick="checkReview()">पिछला रिजल्ट / Answer Key देखें (1 Hr)</button>
+    <button class="btn-orange" onclick="showPublicLeaderboard()">🏆 इस टेस्ट की रैंक लिस्ट (Leaderboard) देखें</button>
+
+    <div id="homeLeaderboardSection" style="display:none; margin-top:25px;">
+        <h3 id="homeLbTitle">🏆 लीडरबोर्ड (Marks के अनुसार)</h3>
+        <table>
+            <thead>
+                <tr>
+                    <th>रैंक (Rank)</th>
+                    <th>छात्र का नाम</th>
+                    <th>प्राप्तांक (Marks)</th>
+                    <th>समय</th>
+                </tr>
+            </thead>
+            <tbody id="homeLeaderboardBody"></tbody>
+        </table>
+    </div>
 </div>
 
+<!-- QUIZ SCREEN -->
 <div class="container" id="quizScreen" style="display:none;">
-    <div id="timer">Time Left: <span id="timeDisplay">00:00</span></div>
+    <div id="timer">शेष समय (Time Left): <span id="timeDisplay">00:00</span></div>
     <h2 id="quizTitleDisplay"></h2>
     <div id="questionsContainer"></div>
-    <button onclick="submitTest()" style="background:#28a745;">टेस्ट सबमिट करें (Submit)</button>
+    <button class="btn-green" onclick="submitTest()">टेस्ट सबमिट करें (Submit Test)</button>
 </div>
 
+<!-- RESULT & REVIEW SCREEN -->
 <div class="container" id="resultScreen" style="display:none;">
-    <h1>टेस्ट समाप्त!</h1>
-    <h2 id="scoreDisplay"></h2>
-    <h3 id="rankDisplay">रैंक कैलकुलेट की जा रही है... कृपया प्रतीक्षा करें...</h3>
-    <p style="color:red; text-align:center;">आप अपने सही/गलत उत्तर सबमिट करने के 1 घंटे के भीतर ही देख सकते हैं।</p>
+    <h1>टेस्ट परिणाम (Result)</h1>
+    <h2 id="scoreDisplay" style="color:#28a745;"></h2>
+    <div id="rankDisplay">रैंक कैलकुलेट की जा रही है...</div>
+
+    <h3>🏆 टॉपर्स एवं रैंक लिस्ट (Marks के अनुसार)</h3>
+    <table>
+        <thead>
+            <tr>
+                <th>रैंक (Rank)</th>
+                <th>छात्र का नाम</th>
+                <th>प्राप्तांक (Marks)</th>
+            </tr>
+        </thead>
+        <tbody id="studentLeaderboardBody"></tbody>
+    </table>
+
+    <hr style="margin: 25px 0;">
+    <p style="color:#dc3545; text-align:center; font-weight:bold;">नोट: सही और गलत उत्तर (Answer Key) केवल टेस्ट सबमिट करने के 1 घंटे के भीतर ही देखे जा सकते हैं।</p>
     <div id="reviewContainer"></div>
     <button onclick="location.reload()" style="margin-top: 20px;">होम पेज पर जाएँ</button>
 </div>
 
 <script>
-    // 1. FIREBASE CONFIGURATION (यहाँ अपनी Firebase Config डालें)
+    // 1. FIREBASE CONFIGURATION (Pre-configured for your project)
     const firebaseConfig = {
-        apiKey: "YOUR_API_KEY",
-        authDomain: "YOUR_AUTH_DOMAIN",
-        databaseURL: "YOUR_DATABASE_URL",
-        projectId: "YOUR_PROJECT_ID",
-        storageBucket: "YOUR_STORAGE_BUCKET",
-        messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
-        appId: "YOUR_APP_ID"
+        apiKey: "AIzaSyCNrj_kjgL968A9bnCxchVkstqraLlJXB8",
+        authDomain: "chemistry-quiz-549f8.firebaseapp.com",
+        databaseURL: "[https://chemistry-quiz-549f8-default-rtdb.firebaseio.com](https://chemistry-quiz-549f8-default-rtdb.firebaseio.com)",
+        projectId: "chemistry-quiz-549f8",
+        storageBucket: "chemistry-quiz-549f8.appspot.com",
+        messagingSenderId: "80126416681",
+        appId: "1:80126416681:web:03982f45ca35a97c758938"
     };
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
@@ -103,7 +145,7 @@
     // 2. ANTI-CHEATING SYSTEM
     document.addEventListener('contextmenu', event => event.preventDefault());
     document.addEventListener('keydown', function(e) {
-        if (e.ctrlKey && (e.key === 'c' || e.key === 'v' || e.key === 'x' || e.key === 'u' || e.key === 'p')) {
+        if (e.ctrlKey && ['c', 'v', 'x', 'u', 'p'].includes(e.key.toLowerCase())) {
             e.preventDefault();
         }
     });
@@ -111,7 +153,7 @@
     let isTestActive = false;
     document.addEventListener('visibilitychange', function() {
         if (document.hidden && isTestActive) {
-            alert("चेतावनी: आपने टैब/विंडो बदली। आपका टेस्ट ऑटो-सबमिट किया जा रहा है!");
+            alert("चेतावनी: आपने टैब या स्क्रीन बदली है! चीटिंग रोकने के लिए आपका टेस्ट ऑटो-सबमिट किया जा रहा है।");
             submitTest();
         }
     });
@@ -123,15 +165,20 @@
     let studentName = null;
     let timerInterval;
 
-    // 4. LOAD QUIZZES BASED ON SUBJECT
+    // 4. LOAD QUIZZES FOR SELECTED SUBJECT
     function loadQuizzes() {
         subject = document.getElementById('subjectSelect').value;
         const quizSelect = document.getElementById('quizSelect');
-        quizSelect.innerHTML = '<option value="">Loading...</option>';
+        document.getElementById('homeLeaderboardSection').style.display = 'none';
+        quizSelect.innerHTML = '<option value="">लोड हो रहा है...</option>';
 
         if(subject) {
             db.ref(`Quizzes_Class10/${subject}`).once('value', snapshot => {
                 quizSelect.innerHTML = '<option value="">-- टेस्ट चुनें --</option>';
+                if (!snapshot.exists()) {
+                    quizSelect.innerHTML = '<option value="">इस विषय में अभी कोई टेस्ट नहीं है</option>';
+                    return;
+                }
                 snapshot.forEach(child => {
                     let option = document.createElement('option');
                     option.value = child.key;
@@ -139,6 +186,8 @@
                     quizSelect.appendChild(option);
                 });
             });
+        } else {
+            quizSelect.innerHTML = '<option value="">-- पहले विषय चुनें --</option>';
         }
     }
 
@@ -149,13 +198,15 @@
         studentName = document.getElementById('studentName').value.trim();
 
         if(!subject || !quizId || !studentName) {
-            alert("कृपया सभी जानकारी भरें!"); return;
+            alert("कृपया विषय, टेस्ट और अपना पूरा नाम सही से भरें!");
+            return;
         }
 
         // 5-Hour Retake Restriction Check
-        const lastAttempt = localStorage.getItem(`attempt_10_${subject}_${quizId}_${studentName}`);
+        const attemptKey = `attempt_10_${subject}_${quizId}_${studentName.toLowerCase()}`;
+        const lastAttempt = localStorage.getItem(attemptKey);
         if (lastAttempt && (Date.now() - parseInt(lastAttempt)) < 5 * 60 * 60 * 1000) {
-            alert("आप 5 घंटे की अवधि पूरी होने से पहले यह टेस्ट दोबारा नहीं दे सकते।");
+            alert("आप यह टेस्ट दे चुके हैं! 5 घंटे पूरे होने से पहले आप दोबारा टेस्ट नहीं दे सकते। अपना रिजल्ट देखने के लिए नीचे हरे बटन पर क्लिक करें।");
             return;
         }
 
@@ -169,12 +220,14 @@
                 
                 isTestActive = true;
                 renderQuestions(currentQuizData.questions);
-                startTimer(currentQuizData.timer || 30);
+                startTimer(Number(currentQuizData.timer) || 30);
+            } else {
+                alert("टेस्ट लोड करने में समस्या आई। कृपया पुनः प्रयास करें।");
             }
         });
     }
 
-    // 6. RENDER QUESTIONS (NO RANDOMIZATION)
+    // 6. RENDER QUESTIONS (NO OPTION RANDOMIZATION)
     function renderQuestions(questions) {
         const container = document.getElementById('questionsContainer');
         container.innerHTML = '';
@@ -184,9 +237,10 @@
             qDiv.className = 'question-card';
             let html = `<h3>प्र. ${index + 1}: ${q.question}</h3>`;
             
-            q.options.forEach((opt, i) => {
+            q.options.forEach((opt) => {
+                let cleanOpt = String(opt).trim();
                 html += `<label class="option-label">
-                            <input type="radio" name="q${index}" value="${opt}"> ${opt}
+                            <input type="radio" name="q${index}" value="${cleanOpt.replace(/"/g, '&quot;')}"> ${cleanOpt}
                          </label>`;
             });
             qDiv.innerHTML = html;
@@ -204,7 +258,7 @@
             display.innerText = `${m < 10 ? '0'+m : m}:${s < 10 ? '0'+s : s}`;
             if (timeInSeconds <= 0) {
                 clearInterval(timerInterval);
-                alert("समय समाप्त! टेस्ट ऑटो-सबमिट हो रहा है।");
+                alert("समय समाप्त! आपका टेस्ट ऑटो-सबमिट हो रहा है।");
                 submitTest();
             }
             timeInSeconds--;
@@ -215,7 +269,7 @@
     function generateWatermark(name) {
         const wm = document.getElementById('watermark');
         wm.innerHTML = '';
-        for(let i=0; i<100; i++) {
+        for(let i=0; i<90; i++) {
             let span = document.createElement('span');
             span.className = 'wm-text';
             span.innerText = name;
@@ -223,127 +277,202 @@
         }
     }
 
-    // 9. SUBMIT TEST
+    // 9. SUBMIT TEST & SAVE TO FIREBASE
     function submitTest() {
+        if (!isTestActive && document.getElementById('quizScreen').style.display === 'none') return;
         isTestActive = false;
         clearInterval(timerInterval);
         
         let score = 0;
         let userAnswers = {};
+        let totalQuestions = currentQuizData.questions.length;
         
         currentQuizData.questions.forEach((q, index) => {
             const selected = document.querySelector(`input[name="q${index}"]:checked`);
+            const correctAns = String(q.answer || q.correctAnswer || "").trim();
             if(selected) {
-                userAnswers[index] = selected.value;
-                if(selected.value === q.answer) { score++; }
+                let userVal = String(selected.value).trim();
+                userAnswers[index] = userVal;
+                if(userVal === correctAns) { score++; }
             } else {
                 userAnswers[index] = null;
             }
         });
 
         const timestamp = Date.now();
+        const nameKey = studentName.toLowerCase();
         
-        // Push Data to Firebase Leaderboard_Class10
+        // Push Data to Firebase Leaderboard_Class10 with numeric score
         const newRecordRef = db.ref(`Leaderboard_Class10/${subject}/${quizId}`).push();
         newRecordRef.set({
             name: studentName,
-            score: score,
-            total: currentQuizData.questions.length,
-            timestamp: timestamp,
+            score: Number(score),
+            total: Number(totalQuestions),
+            timestamp: Number(timestamp),
             answers: userAnswers
         }).then(() => {
-            calculateAndDisplayRank(newRecordRef.key);
+            calculateAndDisplayRank(newRecordRef.key, studentName);
         });
 
-        // Set Local Storage
-        localStorage.setItem(`attempt_10_${subject}_${quizId}_${studentName}`, timestamp);
-        localStorage.setItem(`recordKey_10_${subject}_${quizId}_${studentName}`, newRecordRef.key);
-        localStorage.setItem(`review_10_${subject}_${quizId}_${studentName}`, JSON.stringify(userAnswers));
+        // Save in LocalStorage for 5-Hr Lock and 1-Hr Review
+        localStorage.setItem(`attempt_10_${subject}_${quizId}_${nameKey}`, timestamp);
+        localStorage.setItem(`recordKey_10_${subject}_${quizId}_${nameKey}`, newRecordRef.key);
+        localStorage.setItem(`review_10_${subject}_${quizId}_${nameKey}`, JSON.stringify(userAnswers));
+        localStorage.setItem(`score_10_${subject}_${quizId}_${nameKey}`, `${score} / ${totalQuestions}`);
 
-        // UI Changes
+        // Show Result Screen
         document.getElementById('quizScreen').style.display = 'none';
         document.getElementById('resultScreen').style.display = 'block';
-        document.getElementById('scoreDisplay').innerText = `आपका स्कोर: ${score} / ${currentQuizData.questions.length}`;
+        document.getElementById('scoreDisplay').innerText = `आपका स्कोर: ${score} / ${totalQuestions}`;
         
         renderReview(userAnswers);
     }
 
-    // 10. CALCULATE AND DISPLAY RANK (MARKS-BASED ROBUST SORTING)
-    function calculateAndDisplayRank(recordKey) {
+    // 10. STRICT MARKS-BASED RANK CALCULATION & LEADERBOARD
+    function sortAndRankResults(rawList) {
+        // Sort strictly by Marks (Descending), then by Timestamp (Ascending)
+        rawList.sort((a, b) => {
+            if (b.score !== a.score) {
+                return b.score - a.score;
+            }
+            return a.timestamp - b.timestamp;
+        });
+
+        // Assign tie-aware Rank based on Marks
+        let currentRank = 1;
+        for (let i = 0; i < rawList.length; i++) {
+            if (i > 0 && rawList[i].score < rawList[i - 1].score) {
+                currentRank = i + 1;
+            }
+            rawList[i].rank = currentRank;
+        }
+        return rawList;
+    }
+
+    function calculateAndDisplayRank(recordKey, currentStudentName) {
         db.ref(`Leaderboard_Class10/${subject}/${quizId}`).once('value', snapshot => {
             let results = [];
             snapshot.forEach(child => {
                 let data = child.val();
-                results.push({ 
-                    key: child.key, 
+                results.push({
+                    key: child.key,
+                    name: data.name || "Unknown",
                     score: Number(data.score) || 0,
-                    timestamp: Number(data.timestamp) || 0 
+                    total: Number(data.total) || 50,
+                    timestamp: Number(data.timestamp) || 0
                 });
             });
 
-            // Sorting logic: Higher score first, if tie -> Earliest timestamp first
-            results.sort((a, b) => {
-                if (b.score !== a.score) {
-                    return b.score - a.score;
-                }
-                return a.timestamp - b.timestamp;
-            });
+            results = sortAndRankResults(results);
 
-            // Assign ranks handling ties (same score = same rank)
-            let currentRank = 1;
-            for (let i = 0; i < results.length; i++) {
-                if (i > 0 && results[i].score < results[i - 1].score) {
-                    currentRank = i + 1;
-                }
-                results[i].rank = currentRank;
-            }
-
-            // Find current student's rank
+            // Find student by exact recordKey or fallback to name
             let myRecord = results.find(r => r.key === recordKey);
-            
-            if (myRecord) {
-                document.getElementById('rankDisplay').innerText = `🏆 आपकी रैंक: #${myRecord.rank} (कुल ${results.length} छात्रों में)`;
-            } else {
-                document.getElementById('rankDisplay').innerText = "रैंक प्राप्त करने में त्रुटि हुई।";
+            if (!myRecord && currentStudentName) {
+                myRecord = results.find(r => r.name.toLowerCase() === currentStudentName.toLowerCase());
             }
+
+            if (myRecord) {
+                document.getElementById('rankDisplay').innerText = `🏆 आपकी रैंक: #${myRecord.rank} (कुल ${results.length} छात्रों में) | अंक: ${myRecord.score}/${myRecord.total}`;
+            } else {
+                document.getElementById('rankDisplay').innerText = `कुल छात्र: ${results.length}`;
+            }
+
+            // Populate Result Screen Leaderboard Table
+            const tbody = document.getElementById('studentLeaderboardBody');
+            tbody.innerHTML = '';
+            results.forEach(r => {
+                let isMe = (myRecord && r.key === myRecord.key) ? 'class="my-row"' : '';
+                tbody.innerHTML += `<tr ${isMe}>
+                    <td>#${r.rank}</td>
+                    <td>${r.name}</td>
+                    <td>${r.score} / ${r.total}</td>
+                </tr>`;
+            });
         });
     }
 
-    // 11. 1-HOUR REVIEW WINDOW CHECK & RENDER
+    // 11. PUBLIC LEADERBOARD ON HOME SCREEN
+    function showPublicLeaderboard() {
+        subject = document.getElementById('subjectSelect').value;
+        quizId = document.getElementById('quizSelect').value;
+
+        if(!subject || !quizId) {
+            alert("रैंक लिस्ट देखने के लिए कृपया पहले विषय और टेस्ट चुनें!");
+            return;
+        }
+
+        const section = document.getElementById('homeLeaderboardSection');
+        const tbody = document.getElementById('homeLeaderboardBody');
+        section.style.display = 'block';
+        tbody.innerHTML = '<tr><td colspan="4">लोड हो रहा है...</td></tr>';
+
+        db.ref(`Leaderboard_Class10/${subject}/${quizId}`).once('value', snapshot => {
+            let results = [];
+            snapshot.forEach(child => {
+                let data = child.val();
+                results.push({
+                    name: data.name || "Unknown",
+                    score: Number(data.score) || 0,
+                    total: Number(data.total) || 50,
+                    timestamp: Number(data.timestamp) || 0
+                });
+            });
+
+            results = sortAndRankResults(results);
+            tbody.innerHTML = '';
+
+            if(results.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="4">अभी तक किसी ने यह टेस्ट नहीं दिया है।</td></tr>';
+                return;
+            }
+
+            results.forEach(r => {
+                let dateStr = r.timestamp ? new Date(r.timestamp).toLocaleString('en-IN') : '-';
+                tbody.innerHTML += `<tr>
+                    <td style="font-weight:bold; color:#d9534f;">#${r.rank}</td>
+                    <td>${r.name}</td>
+                    <td style="font-weight:bold; color:#28a745;">${r.score} / ${r.total}</td>
+                    <td>${dateStr}</td>
+                </tr>`;
+            });
+        });
+    }
+
+    // 12. 1-HOUR REVIEW WINDOW CHECK
     function checkReview() {
         subject = document.getElementById('subjectSelect').value;
         quizId = document.getElementById('quizSelect').value;
         studentName = document.getElementById('studentName').value.trim();
 
         if(!subject || !quizId || !studentName) {
-            alert("रिव्यू देखने के लिए विषय, टेस्ट और अपना नाम दर्ज करें!"); return;
+            alert("रिव्यू देखने के लिए कृपया विषय, टेस्ट और अपना वही नाम दर्ज करें!");
+            return;
         }
 
-        const submitTime = localStorage.getItem(`attempt_10_${subject}_${quizId}_${studentName}`);
-        const recordKey = localStorage.getItem(`recordKey_10_${subject}_${quizId}_${studentName}`);
+        const nameKey = studentName.toLowerCase();
+        const submitTime = localStorage.getItem(`attempt_10_${subject}_${quizId}_${nameKey}`);
+        const recordKey = localStorage.getItem(`recordKey_10_${subject}_${quizId}_${nameKey}`);
+        const savedScore = localStorage.getItem(`score_10_${subject}_${quizId}_${nameKey}`);
         
-        if (!submitTime || !recordKey) {
-            alert("आपने अभी तक यह टेस्ट नहीं दिया है या डेटा मौजूद नहीं है।"); return;
+        if (!submitTime) {
+            alert("इस डिवाइस पर आपके नाम से इस टेस्ट का कोई हालिया रिकॉर्ड नहीं मिला। (आप नीचे नारंगी बटन से पूरी रैंक लिस्ट देख सकते हैं)।");
+            return;
         }
 
-        // 1-Hour Restriction Logic
         if (Date.now() - parseInt(submitTime) > 60 * 60 * 1000) {
-            alert("रिव्यू का समय समाप्त हो गया है। आप टेस्ट सबमिट करने के 1 घंटे के भीतर ही आंसर की (Answer Key) देख सकते हैं।");
+            alert("1 घंटे का रिव्यू समय समाप्त हो चुका है! अब Answer Key नहीं देखी जा सकती।");
             return;
         }
 
         db.ref(`Quizzes_Class10/${subject}/${quizId}`).once('value', snapshot => {
             currentQuizData = snapshot.val();
-            let savedAnswers = JSON.parse(localStorage.getItem(`review_10_${subject}_${quizId}_${studentName}`));
+            let savedAnswers = JSON.parse(localStorage.getItem(`review_10_${subject}_${quizId}_${nameKey}`));
             
             document.getElementById('loginScreen').style.display = 'none';
             document.getElementById('resultScreen').style.display = 'block';
-            document.getElementById('scoreDisplay').innerText = "आपका रिव्यू पैनल (Answer Key)";
+            document.getElementById('scoreDisplay').innerText = savedScore ? `आपका स्कोर: ${savedScore}` : "आपकी Answer Key";
             
-            // Fetch and display rank again during review
-            document.getElementById('rankDisplay').innerText = "रैंक लोड हो रही है...";
-            calculateAndDisplayRank(recordKey);
-
+            calculateAndDisplayRank(recordKey, studentName);
             renderReview(savedAnswers);
         });
     }
@@ -356,18 +485,22 @@
             let qDiv = document.createElement('div');
             qDiv.className = 'question-card';
             let html = `<h3>प्र. ${index + 1}: ${q.question}</h3>`;
+            let correctAns = String(q.answer || q.correctAnswer || "").trim();
             
             q.options.forEach(opt => {
+                let cleanOpt = String(opt).trim();
+                let userChoice = userAnswers && userAnswers[index] ? String(userAnswers[index]).trim() : null;
+                
                 let cssClass = '';
-                if(opt === q.answer) {
+                if(cleanOpt === correctAns) {
                     cssClass = 'correct'; 
-                } else if(userAnswers[index] === opt && opt !== q.answer) {
+                } else if(userChoice === cleanOpt && cleanOpt !== correctAns) {
                     cssClass = 'wrong'; 
                 }
                 
-                let isChecked = (userAnswers[index] === opt) ? 'checked' : '';
+                let isChecked = (userChoice === cleanOpt) ? 'checked' : '';
                 html += `<label class="option-label ${cssClass}">
-                            <input type="radio" disabled ${isChecked}> ${opt}
+                            <input type="radio" disabled ${isChecked}> ${cleanOpt}
                          </label>`;
             });
             qDiv.innerHTML = html;
